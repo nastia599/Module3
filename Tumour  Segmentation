@@ -1,0 +1,63 @@
+from skimage.io import imread,imshow
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
+from skimage.morphology import opening,closing,disk
+%matplotlib inline
+from skimage.util  import img_as_ubyte
+import skimage.filters.rank as skr
+
+def area(im): #count the number of pixels to have the area
+    pixel = 0 
+    for y in range(im.shape[0]): 
+        for x in range(im.shape[1]):       
+            pixel += 1 #count all the pixel on this region
+    area = 0.115*0.115*pixel
+    return area
+
+def opening(im,sel): #morphological operation removing smaller region which are not belonged to the tumour
+    return skr.maximum(skr.minimum(im,sel),sel)>0
+
+def optimal_threshold(h,t):
+    # Cut distribution in 2 in the histogram
+    g1 = h[:t] #region before the value t
+    g2 = h[t:] 
+    # Compute the centroids for each region
+    m1 = (g1*np.arange(0,t)).sum()/g1.sum()
+    m2 = (g2*np.arange(t,len(h))).sum()/g2.sum()
+   
+    t2 = int((m1+m2)/2) #mean of the 2 centroids
+      
+    if( t2 != t ) : return optimal_threshold(h,t2) #do that until thershold doesn't move anymore : it's stable
+    return t2
+
+
+def transform(im,t):
+    im_copy = t*2<im[:,:,0] #we suppose that other tumor cancers have lots of black pixel 
+    #so we have to double this value to take the tumor's zone which is bright
+    #create a boolean image to take only pixel higher then 160
+    mask= opening(img_as_ubyte(im_copy),disk(2.96))#we use morphological operation to remove other smaller region
+    new_im = im.copy() #create a copy
+    new_im[mask==False]=0 #all the region which doesn't belong to the mask are 0
+    
+    return new_im
+    
+im = imread('mri_brain.jpg') 
+
+plt.figure()
+plt.imshow(im)
+plt.show()
+
+
+t = optimal_threshold(h,128) #h = histogram of the image
+print("Optimal threshold : %d"%t) #with other images, we can improve the threshold
+
+im_out = transform(im,t) #segmentation of the tumour
+area = area(im_out) #estimation of the area of tumour as we have area of the pixel *number of pixels
+#We suppose each pixel are a square : square area = side^2
+
+plt.figure()
+plt.imshow(im_out,cmap=plt.cm.gray )
+plt.show()
+
+print("area of the tumor is %f cm2"%area)
