@@ -1,4 +1,4 @@
-from skimage.io import imread,imshow
+from skimage.io import imread,imshow,imsave
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
@@ -49,15 +49,17 @@ plt.imshow(im)
 plt.show()
 
 
-t = optimal_threshold(h,128) #h = histogram of the image
+t = optimal_threshold(h,128) #h = histogram of the image, t = threshold
 print("Optimal threshold : %d"%t) #with other images, we can improve the threshold
 
 im_out = transform(im,t) #segmentation of the tumour
 area = area(im_out) #estimation of the area of tumour as we have area of the pixel *number of pixels
 #We suppose each pixel are a square : square area = side^2
 
+print("area of the tumor is %f cm2"%area)
 plt.figure()
 plt.imshow(im_out,cmap=plt.cm.gray )
 plt.show()
 
-print("area of the tumor is %f cm2"%area)
+imsave('tumour_segmentation.jpg',im_out) 
+
