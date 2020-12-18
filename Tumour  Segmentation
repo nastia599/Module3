@@ -10,8 +10,9 @@ import skimage.filters.rank as skr
 def area(im): #count the number of pixels to have the area
     pixel = 0 
     for y in range(im.shape[0]): 
-        for x in range(im.shape[1]):       
-            pixel += 1 #count all the pixel on this region
+        for x in range(im.shape[1]): 
+            if(im[y,x].all()>0):
+                pixel += 1 #count all the pixel in this region
     area = 0.115*0.115*pixel
     return area
 
@@ -36,6 +37,7 @@ def transform(im,t):
     im_copy = t*2<im[:,:,0] #we suppose that other tumor cancers have lots of black pixel 
     #so we have to double this value to take the tumor's zone which is bright
     #create a boolean image to take only pixel higher then 160
+    
     mask= opening(img_as_ubyte(im_copy),disk(2.96))#we use morphological operation to remove other smaller region
     new_im = im.copy() #create a copy
     new_im[mask==False]=0 #all the region which doesn't belong to the mask are 0
@@ -48,18 +50,20 @@ plt.figure()
 plt.imshow(im)
 plt.show()
 
+h,bins = np.histogram(im,range(257)) #h = histogram of the image
 
-t = optimal_threshold(h,128) #h = histogram of the image, t = threshold
-print("Optimal threshold : %d"%t) #with other images, we can improve the threshold
+t = optimal_threshold(h,128) 
+#with other images, we can improve the threshold
 
 im_out = transform(im,t) #segmentation of the tumour
 area = area(im_out) #estimation of the area of tumour as we have area of the pixel *number of pixels
 #We suppose each pixel are a square : square area = side^2
 
-print("area of the tumor is %f cm2"%area)
+
 plt.figure()
 plt.imshow(im_out,cmap=plt.cm.gray )
 plt.show()
+print("Area of the tumor is %f cm2"%area)
 
 imsave('tumour_segmentation.jpg',im_out) 
 
