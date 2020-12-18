@@ -57,7 +57,7 @@ t = optimal_threshold(h,128)
 
 im_out = transform(im,t) #segmentation of the tumour
 area = area(im_out) #estimation of the area of tumour as we have area of the pixel *number of pixels
-#We suppose each pixel are a square : square area = side^2
+#We suppose each pixel is a square : square area = side^2
 
 
 plt.figure()
